@@ -6,6 +6,7 @@
   <title>Dashboard Toko Kitchenware</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:Arial,Helvetica,sans-serif;background:#eef3f8;color:#1f2937}
@@ -201,7 +202,7 @@
       </section>
 
       <section id="report" class="page">
-        <div class="toolbar"><h2 class="content-title">Laporan</h2><div><button class="btn" onclick="exportCSV()">Export CSV</button><button class="btn" onclick="window.print()">Print</button></div></div>
+        <div class="toolbar"><h2 class="content-title">Laporan</h2><div><button class="btn" onclick="exportExcel()">Export Excel</button><button class="btn" onclick="window.print()">Print</button></div></div>
         <div class="card table-wrap"><table><thead><tr><th>Kode</th><th>Nama Barang</th><th>Kategori</th><th>Stok</th><th>Nilai Modal</th><th>Nilai Jual</th><th>Status</th></tr></thead><tbody id="reportTable"></tbody></table></div>
       </section>
     </main>
@@ -469,10 +470,40 @@ function showStock(){
   const i=db.items.find(x=>x.id==outItem.value);
   stockNow.value=i?`${i.current_stock} ${i.unit}`:"";
 }
-function exportCSV(){
-  const rows=[["Kode","Nama","Kategori","Merek","Supplier","Stok","Harga Modal","Harga Jual","Status"],...filteredItems().map(i=>[i.sku,i.name,categoryName(i.category_id),brandName(i.brand_id),supplierName(i.supplier_id),i.current_stock,i.purchase_price,i.selling_price,statusItem(i)])];
-  const csv=rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
-  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"})); a.download="laporan_inventory_kitchenware.csv"; a.click();
+function exportExcel(){
+  const data = filteredItems().map(i => ({
+    "Kode Barang": i.sku,
+    "Nama Barang": i.name,
+    "Kategori": categoryName(i.category_id),
+    "Merek": brandName(i.brand_id),
+    "Supplier": supplierName(i.supplier_id),
+    "Stok": i.current_stock,
+    "Harga Modal": Number(i.purchase_price),
+    "Harga Jual": Number(i.selling_price),
+    "Nilai Modal": Number(i.current_stock) * Number(i.purchase_price),
+    "Nilai Jual": Number(i.current_stock) * Number(i.selling_price),
+    "Status": statusItem(i)
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(data);
+
+  worksheet["!cols"] = [
+    { wch: 14 },
+    { wch: 28 },
+    { wch: 22 },
+    { wch: 16 },
+    { wch: 28 },
+    { wch: 10 },
+    { wch: 16 },
+    { wch: 16 },
+    { wch: 18 },
+    { wch: 18 },
+    { wch: 14 }
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Inventory");
+  XLSX.writeFile(workbook, "laporan_inventory_kitchenware.xlsx");
 }
 
 setupSelects();
