@@ -90,7 +90,7 @@
       .page{display:none!important}
       #report{display:block!important}
       #report > .content-title{display:none!important}
-      #printArea{display:block!important;padding:20px}
+      #printArea{display:block!important;padding:10px}
       #printArea h1{
         text-align:center;
         font-family:Georgia,serif;
@@ -140,8 +140,9 @@
       }
       @page{
         size: landscape;
-        margin: 12mm;
+        margin: 8mm;
       }
+      a[href]:after{content:""!important;}
     }
 
     @media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.dashboard-layout,.chart-two,.two-col{grid-template-columns:1fr}}
@@ -193,7 +194,6 @@
           <select id="fStatus" onchange="renderAll()"><option value="">Semua Status</option><option>Normal</option><option>Menipis</option><option>Habis</option></select>
           <button class="btn" onclick="clearFilter()">Bersihkan</button>
         </div>
-        <div class="note" id="filterInfo">Menampilkan seluruh data inventory kitchenware.</div>
         <div class="kpi-grid">
           <div class="kpi"><div class="label">Total Barang</div><div class="value" id="kpiItems">0</div><div class="small">Jenis barang</div></div>
           <div class="kpi"><div class="label">Total Stok</div><div class="value" id="kpiStock">0</div><div class="small">Jumlah di gudang</div></div>
@@ -266,12 +266,7 @@
           <table>
             <thead>
               <tr>
-                <th>Nama Supplier</th>
-                <th>Kontak</th>
-                <th>Alamat</th>
-                <th>Jumlah Barang</th>
-                <th>Status</th>
-                <th>Aksi</th>
+                <th>Nama Supplier</th><th>Kontak</th><th>Alamat Supplier</th><th>Jumlah Barang</th><th>Status</th><th>Aksi</th>
               </tr>
             </thead>
             <tbody id="supplierTable"></tbody>
@@ -287,10 +282,6 @@
           <select id="masterCategoryFilter" onchange="renderAll()"><option value="">Semua Kategori</option></select>
           <select id="masterBrandFilter" onchange="renderAll()"><option value="">Semua Merek</option></select>
           <button class="btn" onclick="clearMasterFilter()">Bersihkan</button>
-        </div>
-
-        <div class="note" id="masterInfo">
-          Menampilkan hubungan kategori dan merek berdasarkan data barang.
         </div>
 
         <div class="two-col">
@@ -547,7 +538,7 @@ function renderTables(){
       <tr>
         <td>${s.name}</td>
         <td>${s.contact||"-"}</td>
-        <td>${s.address||"-"}</td>
+        <td>${s.address && s.address.trim() ? s.address : "-"}</td>
         <td>${db.items.filter(i=>i.supplier_id===s.id).length}</td>
         <td><span class="badge ${(s.status||"Aktif")==="Aktif"?"green":"orange"}">${s.status||"Aktif"}</span></td>
         <td>
@@ -598,21 +589,7 @@ function renderTables(){
       <td>${rackCode(i.rack_id)}</td>
       <td>${badge(statusItem(i))}</td>
     </tr>
-  `).join("") || `<tr><td colspan="8">Tidak ada barang yang sesuai dengan filter.</td></tr>`;
-
-  if (masterCat && masterBrand) {
-    masterInfo.textContent = `Menampilkan barang kategori ${categoryName(Number(masterCat))} dengan merek ${brandName(Number(masterBrand))}. Total ${masterItems.length} barang.`;
-  } else if (masterCat) {
-    masterInfo.textContent = `Menampilkan seluruh barang pada kategori ${categoryName(Number(masterCat))}. Total ${masterItems.length} barang.`;
-  } else if (masterBrand) {
-    masterInfo.textContent = `Menampilkan seluruh barang dengan merek ${brandName(Number(masterBrand))}. Total ${masterItems.length} barang.`;
-  } else if (masterKeyword) {
-    masterInfo.textContent = `Hasil pencarian "${masterKeyword}" menampilkan ${masterItems.length} barang.`;
-  } else {
-    masterInfo.textContent = "Menampilkan hubungan kategori dan merek berdasarkan data barang.";
-  }
-
-  inTable.innerHTML=db.moves.filter(m=>m.movement_type==="IN").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge green">+${m.quantity}</span></td><td>${m.invoice_number||"-"}</td></tr>`).join("");
+  `).join("") || `<tr><td colspan="8">Tidak ada barang yang sesuai dengan filter.</td></tr>`;inTable.innerHTML=db.moves.filter(m=>m.movement_type==="IN").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge green">+${m.quantity}</span></td><td>${m.invoice_number||"-"}</td></tr>`).join("");
   outTable.innerHTML=db.moves.filter(m=>m.movement_type==="OUT").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge red">-${m.quantity}</span></td><td>${m.purpose||"-"}</td></tr>`).join("");
   lowStockTable.innerHTML=items.filter(i=>statusItem(i)!=="Normal").map(i=>`<tr><td>${i.sku}</td><td>${i.name}</td><td>${categoryName(i.category_id)}</td><td>${i.current_stock}</td><td>${i.minimum_stock}</td><td>${rackCode(i.rack_id)}</td><td>${badge(statusItem(i))}</td></tr>`).join("") || `<tr><td colspan="7">Tidak ada barang yang menipis.</td></tr>`;
 }
@@ -651,9 +628,7 @@ function renderDashboard(){
   if(fCategory.value){
     const c=categoryName(Number(fCategory.value));
     info=`Kategori ${c} menampilkan ${items.length} barang.`;
-  }
-  filterInfo.textContent=info;
-}
+  }}
 
 async function nextSku(){
   const nums=db.items.map(i=>Number(String(i.sku).replace("KW",""))||0);
