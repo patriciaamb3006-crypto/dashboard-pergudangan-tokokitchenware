@@ -248,7 +248,7 @@ function categoryName(id){return (db.categories.find(x=>x.id==id)||{}).name||"-"
 function brandName(id){return (db.brands.find(x=>x.id==id)||{}).name||"-"}
 function supplierName(id){return (db.suppliers.find(x=>x.id==id)||{}).name||"-"}
 function rackCode(id){return (db.racks.find(x=>x.id==id)||{}).code||"-"}
-function itemName(id){return (db.items.find(i=>i.id==id)||{}).name||"-"}
+function getItemName(id){return (db.items.find(i=>i.id==id)||{}).name||"-"}
 
 async function loadData(){
   const [cat,brand,sup,rack,prod,mov] = await Promise.all([
@@ -355,8 +355,8 @@ function renderTables(){
   categoryList.innerHTML=db.categories.filter(c=>c.name.toLowerCase().includes(masterKeyword)&&(!masterCat||String(c.id)===String(masterCat))).map(c=>`<p style="padding:9px;border-bottom:1px solid #e5edf5"><b>${c.name}</b> - ${db.items.filter(i=>i.category_id===c.id).length} barang</p>`).join("");
   brandList.innerHTML=db.brands.filter(b=>b.name.toLowerCase().includes(masterKeyword)&&(!masterBrand||String(b.id)===String(masterBrand))).map(b=>`<p style="padding:9px;border-bottom:1px solid #e5edf5"><b>${b.name}</b> - ${db.items.filter(i=>i.brand_id===b.id).length} barang</p>`).join("");
 
-  inTable.innerHTML=db.moves.filter(m=>m.movement_type==="IN").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${itemName(m.product_id)}</td><td><span class="badge green">+${m.quantity}</span></td><td>${m.invoice_number||"-"}</td></tr>`).join("");
-  outTable.innerHTML=db.moves.filter(m=>m.movement_type==="OUT").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${itemName(m.product_id)}</td><td><span class="badge red">-${m.quantity}</span></td><td>${m.purpose||"-"}</td></tr>`).join("");
+  inTable.innerHTML=db.moves.filter(m=>m.movement_type==="IN").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge green">+${m.quantity}</span></td><td>${m.invoice_number||"-"}</td></tr>`).join("");
+  outTable.innerHTML=db.moves.filter(m=>m.movement_type==="OUT").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge red">-${m.quantity}</span></td><td>${m.purpose||"-"}</td></tr>`).join("");
   lowStockTable.innerHTML=items.filter(i=>statusItem(i)!=="Normal").map(i=>`<tr><td>${i.sku}</td><td>${i.name}</td><td>${categoryName(i.category_id)}</td><td>${i.current_stock}</td><td>${i.minimum_stock}</td><td>${rackCode(i.rack_id)}</td><td>${badge(statusItem(i))}</td></tr>`).join("") || `<tr><td colspan="7">Tidak ada barang yang menipis.</td></tr>`;
 }
 
