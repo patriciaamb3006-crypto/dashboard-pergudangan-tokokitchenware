@@ -1,979 +1,340 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard Toko Kitchenware</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style/dist/xlsx.bundle.js"></script>
-  <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,Helvetica,sans-serif;background:#eef3f8;color:#1f2937}
-    button,input,select,textarea{font:inherit}
-    button{cursor:pointer;border:0}
-    .hide{display:none!important}
-    :root{
-      --navy:#17324d;--blue:#1f5f99;--blue2:#2b6cb0;--line:#d6e0ec;--muted:#64748b;
-      --green:#16803c;--green-bg:#dff7e8;--orange:#a66300;--orange-bg:#fff0c2;
-      --red:#b42318;--red-bg:#ffe0df;--shadow:0 8px 22px rgba(30,55,90,.08);
-    }
-    .login-page{min-height:100vh;display:grid;grid-template-columns:1.08fr .92fr;background:linear-gradient(rgba(13,37,63,.72),rgba(13,37,63,.72)),url("https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=1600&q=80") center/cover}
-    .login-info{color:white;padding:70px;display:flex;flex-direction:column;justify-content:center}
-    .login-info h1{font-family:Georgia,serif;font-size:58px;line-height:1.1;font-weight:500;margin-bottom:22px;text-shadow:0 3px 12px rgba(0,0,0,.28)}
-    .login-info p{max-width:700px;font-size:18px;line-height:1.85;color:#edf6ff}
-    .login-form-wrap{display:flex;align-items:center;justify-content:center;padding:40px}
-    .login-card{width:100%;max-width:420px;background:rgba(255,255,255,.95);border-radius:18px;padding:34px;box-shadow:0 20px 45px rgba(0,0,0,.24)}
-    .login-card h2{font-family:Georgia,serif;color:var(--navy);font-size:30px;font-weight:500;margin-bottom:28px}
-    label{display:block;font-weight:700;font-size:14px;margin-bottom:7px}
-    input,select,textarea{width:100%;padding:11px 12px;border:1px solid #bfcada;border-radius:8px;background:white;outline:none}
-    textarea{min-height:70px;resize:vertical}
-    input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(31,95,153,.13)}
-    .field{margin-bottom:16px}
-    .btn{padding:10px 14px;border-radius:8px;font-weight:700;background:#edf3fa;color:#17324d;border:1px solid #c8d4e2}
-    .btn-primary{background:var(--blue);color:white;border-color:var(--blue)}
-    .btn-danger{background:#c53030;color:white;border-color:#c53030}
-    .btn-full{width:100%;margin-top:7px}
-    .error{color:#c53030;margin-top:12px;font-weight:700;font-size:14px}
-    .app{min-height:100vh;display:grid;grid-template-columns:250px 1fr;background:#eef3f8}
-    .sidebar{background:var(--navy);color:white;padding:20px 15px;min-height:100vh;position:sticky;top:0}
-    .brand{padding:10px 8px 20px;border-bottom:1px solid rgba(255,255,255,.16);margin-bottom:16px}
-    .brand h3{font-family:Georgia,serif;font-size:22px;font-weight:500;line-height:1.2}
-    .brand small{color:#b9cfe4;display:block;margin-top:6px}
-    .role-box{background:#244a70;border-radius:10px;padding:12px;margin-bottom:16px;font-size:14px;line-height:1.5}
-    .menu button{width:100%;text-align:left;padding:12px 13px;margin-bottom:7px;background:transparent;color:#e7eef8;border-radius:8px;font-weight:600}
-    .menu button:hover,.menu button.active{background:#2c5f8d}
-    .main{padding:18px;min-width:0}
-    .topbar{background:linear-gradient(90deg,#1f5f99,#2b6cb0);color:white;border-radius:14px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:15px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .topbar h1{font-family:Georgia,serif;font-size:32px;font-weight:500;letter-spacing:.4px}
-    .topbar span{font-size:14px;color:#dcecff}
-    .page{display:none}.page.active{display:block}
-    .content-title{font-family:Georgia,serif;font-weight:500;color:#17324d;font-size:27px;margin-bottom:14px}
-    .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}
-    .filters input,.filters select{max-width:220px;background:white}
-    .note{background:#fff8df;color:#6b4d00;border:1px solid #e2c56d;border-radius:8px;padding:11px;margin-bottom:12px;font-size:14px}
-    .kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:14px}
-    .kpi{background:white;border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow);min-height:105px}
-    .kpi .label{color:var(--muted);font-size:13px;margin-bottom:8px}
-    .kpi .value{font-size:28px;color:var(--blue);font-weight:800}
-    .kpi .small{font-size:12px;color:#8290a3;margin-top:5px}
-    .dashboard-layout{display:grid;grid-template-columns:1.25fr .75fr;gap:14px;margin-bottom:14px}
-    .chart-card,.table-card,.card{background:white;border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
-    .chart-card{height:330px}
-    .chart-card h3,.table-card h3,.card h3{font-family:Georgia,serif;font-weight:500;color:#17324d;margin-bottom:12px;font-size:20px}
-    .chart-two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
-    .chart-small{height:290px} canvas{max-height:100%}
-    .table-wrap{overflow:auto} table{width:100%;border-collapse:collapse;min-width:850px;background:white}
-    th,td{border-bottom:1px solid #e5edf5;padding:10px;text-align:left;font-size:14px;vertical-align:middle}
-    th{background:#edf4fb;color:#17324d;font-size:13px}
-    .badge{display:inline-block;padding:5px 9px;border-radius:20px;font-size:12px;font-weight:700}
-    .green{background:var(--green-bg);color:var(--green)} .orange{background:var(--orange-bg);color:var(--orange)} .red{background:var(--red-bg);color:var(--red)} .blue{background:#dbeafe;color:#1d4ed8}
-    .toolbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-    .two-col{display:grid;grid-template-columns:360px 1fr;gap:14px}
-    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:20px;z-index:50}
-    .modal{width:min(720px,100%);max-height:92vh;overflow:auto;background:white;border-radius:14px;padding:24px;box-shadow:0 20px 40px rgba(0,0,0,.2)}
-    .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
-    .modal h2{font-family:Georgia,serif;font-weight:500;color:#17324d}
-    .close{width:36px;height:36px;border-radius:8px;background:#edf3fa;font-size:20px}
-    .modal-actions,.form-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px}
-    .toast{position:fixed;right:20px;bottom:20px;background:#17324d;color:white;padding:13px 16px;border-radius:8px;font-weight:700;opacity:0;transform:translateY(60px);transition:.25s;z-index:80}
-    .toast.show{opacity:1;transform:translateY(0)}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kitchenware Inventory Dashboard Final</title>
+<style>
+*{box-sizing:border-box}
+body{
+margin:0;
+font-family:Segoe UI,sans-serif;
+background:
+linear-gradient(rgba(248,250,252,.93),rgba(248,250,252,.95)),
+url('https://images.unsplash.com/photo-1556911220-bff31c812dba?q=80&w=1600&auto=format&fit=crop');
+background-size:cover;
+background-attachment:fixed;
+color:#1e293b;
+}
+.container{
+max-width:1200px;
+margin:30px auto;
+padding:20px;
+}
+.header{
+background:rgba(255,255,255,.92);
+backdrop-filter:blur(8px);
+padding:20px;
+border-radius:18px;
+box-shadow:0 8px 25px rgba(0,0,0,.08);
+margin-bottom:20px;
+}
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:16px;
+margin-bottom:20px;
+}
+.card{
+background:rgba(255,255,255,.94);
+border-radius:18px;
+padding:18px;
+box-shadow:0 8px 24px rgba(15,23,42,.08);
+}
+.filters{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+margin:15px 0;
+}
+input,select{
+padding:11px;
+border:1px solid #dbe3ec;
+border-radius:10px;
+min-width:180px;
+}
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:14px;
+background:white;
+}
+th,td{
+padding:11px;
+border:1px solid #dbe3ec;
+font-size:14px;
+}
+th{
+background:#17324d;
+color:white;
+}
+.btn{
+padding:10px 16px;
+border:none;
+border-radius:10px;
+background:#17324d;
+color:white;
+cursor:pointer;
+}
+.badge{
+padding:5px 10px;
+border-radius:999px;
+font-size:12px;
+font-weight:600;
+}
+.green{background:#dcfce7;color:#166534}
+.orange{background:#fef3c7;color:#92400e}
+.red{background:#fee2e2;color:#991b1b}
+.print-area{display:none}
 
-    .print-area{display:none}
-
-    @media print{
-      body{background:white!important;color:#111!important}
-      .sidebar,.topbar,.toolbar,.filters,.note,.kpi-grid,.dashboard-layout,.chart-two,.table-card,.card:not(.print-keep),#loginPage{display:none!important}
-      .app{display:block!important;background:white!important}
-      .main{padding:0!important}
-      .page{display:none!important}
-      #report{display:block!important}
-      #report > .content-title{display:none!important}
-      #printArea{display:block!important;padding:10px}
-      #printArea h1{
-        text-align:center;
-        font-family:Georgia,serif;
-        font-size:22px;
-        margin-bottom:6px;
-      }
-      #printArea p{
-        text-align:center;
-        margin-bottom:16px;
-        font-size:12px;
-      }
-      .print-summary{
-        width:55%;
-        margin-bottom:16px;
-        border-collapse:collapse;
-        font-size:12px;
-      }
-      .print-summary td{
-        border:1px solid #999;
-        padding:7px;
-      }
-      .print-summary td:first-child{
-        font-weight:bold;
-        background:#eef3f8;
-      }
-      .print-table{
-        width:100%;
-        border-collapse:collapse;
-        font-size:10px;
-      }
-      .print-table th{
-        border:1px solid #777;
-        padding:6px;
-        background:#dbe7f7!important;
-        color:#111!important;
-      }
-      .print-table td{
-        border:1px solid #999;
-        padding:5px;
-        vertical-align:top;
-      }
-      .badge{
-        border:0!important;
-        background:transparent!important;
-        color:#111!important;
-        padding:0!important;
-      }
-      @page{
-        size: landscape;
-        margin: 8mm;
-      }
-      a[href]:after{content:""!important;}
-    }
-
-    @media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.dashboard-layout,.chart-two,.two-col{grid-template-columns:1fr}}
-    @media(max-width:800px){.login-page{grid-template-columns:1fr}.login-info{padding:36px}.login-info h1{font-size:40px}.app{grid-template-columns:1fr}.sidebar{position:relative;min-height:auto}.kpi-grid,.form-grid{grid-template-columns:1fr}.topbar{display:block}.topbar h1{font-size:25px;margin-bottom:6px}}
-  </style>
+@media print{
+body{background:white}
+.no-print{display:none!important}
+.print-area{display:block}
+.print-area h1{text-align:center}
+.print-table{width:100%;border-collapse:collapse}
+.print-table th,.print-table td{
+border:1px solid #777;
+padding:7px;
+font-size:12px;
+}
+.print-table th{
+background:#dbe7f7!important;
+color:black!important;
+}
+}
+</style>
 </head>
 <body>
-  <div id="loginPage" class="login-page">
-    <div class="login-info">
-      <h1>Dashboard Toko Kitchenware</h1>
-      <p>Toko Kitchenware menjual berbagai perlengkapan dapur seperti panci, wajan, alat makan, rak piring, toples, pisau dapur, blender, rice cooker, dan kebutuhan rumah tangga lainnya. Dashboard ini dibuat untuk membantu pencatatan barang agar data stok, barang masuk, barang keluar, supplier, merek, dan lokasi rak lebih mudah dikelola.</p>
-    </div>
-    <div class="login-form-wrap">
-      <form class="login-card" onsubmit="login(event)">
-        <h2>Login</h2>
-        <div class="field"><label>Nama Pengguna</label><input id="username" placeholder="Masukkan nama pengguna"></div>
-        <div class="field"><label>Password</label><input id="password" type="password" placeholder="Masukkan password"></div>
-        <button class="btn btn-primary btn-full">Masuk</button>
-        <div id="loginError" class="error hide">Password tidak sesuai.</div>
-      </form>
-    </div>
-  </div>
 
-  <div id="app" class="app hide">
-    <aside class="sidebar">
-      <div class="brand"><h3>Gudang Kitchenware</h3><small>Sistem Inventory</small></div>
-      <div class="role-box"><b id="roleName">Admin</b><br><span id="userNameText">Petugas Gudang</span></div>
-      <div class="menu">
-        <button class="active" data-page="home" onclick="openPage('home',this)">Beranda</button>
-        <button data-page="items" onclick="openPage('items',this)">Data Barang</button>
-        <button data-page="in" onclick="openPage('in',this)">Barang Masuk</button>
-        <button data-page="out" onclick="openPage('out',this)">Barang Keluar</button>
-        <button data-page="sup" onclick="openPage('sup',this)">Supplier</button>
-        <button data-page="master" onclick="openPage('master',this)">Kategori & Merek</button>
-        <button data-page="report" onclick="openPage('report',this)">Laporan</button>
-        <button onclick="logout()">Keluar</button>
-      </div>
-    </aside>
+<div class="container">
 
-    <main class="main">
-      <div class="topbar"><h1>Dashboard Gudang Kitchenware</h1><span id="todayText"></span></div>
+<div class="header">
+<h1>Kitchenware Inventory Dashboard</h1>
+<p>Dashboard inventory kitchenware dengan filter kategori & merek, supplier management, dan laporan pergudangan.</p>
+</div>
 
-      <section id="home" class="page active">
-        <div class="filters">
-          <input id="searchText" placeholder="Cari barang / kode" oninput="renderAll()">
-          <select id="fCategory" onchange="renderAll()"></select>
-          <select id="fBrand" onchange="renderAll()"></select>
-          <select id="fSupplier" onchange="renderAll()"></select>
-          <select id="fStatus" onchange="renderAll()"><option value="">Semua Status</option><option>Normal</option><option>Menipis</option><option>Habis</option></select>
-          <button class="btn" onclick="clearFilter()">Bersihkan</button>
-        </div>
-        <div class="kpi-grid">
-          <div class="kpi"><div class="label">Total Barang</div><div class="value" id="kpiItems">0</div><div class="small">Jenis barang</div></div>
-          <div class="kpi"><div class="label">Total Stok</div><div class="value" id="kpiStock">0</div><div class="small">Jumlah di gudang</div></div>
-          <div class="kpi"><div class="label">Barang Masuk</div><div class="value" id="kpiIn">0</div><div class="small">Total transaksi masuk</div></div>
-          <div class="kpi"><div class="label">Barang Keluar</div><div class="value" id="kpiOut">0</div><div class="small">Total transaksi keluar</div></div>
-          <div class="kpi"><div class="label">Stok Menipis</div><div class="value" id="kpiLow">0</div><div class="small">Perlu dicek ulang</div></div>
-          <div class="kpi"><div class="label">Nilai Barang</div><div class="value" id="kpiValue">Rp0</div><div class="small">Berdasarkan harga modal</div></div>
-        </div>
-        <div class="dashboard-layout">
-          <div class="chart-card"><h3>Barang Masuk dan Keluar</h3><canvas id="movementChart"></canvas></div>
-          <div class="chart-card"><h3>Status Stok</h3><canvas id="statusChart"></canvas></div>
-        </div>
-        <div class="chart-two">
-          <div class="chart-card chart-small"><h3>Stok per Kategori</h3><canvas id="categoryChart"></canvas></div>
-          <div class="chart-card chart-small"><h3>Penggunaan Rak</h3><canvas id="rackChart"></canvas></div>
-        </div>
-        <div class="table-card"><h3>Barang yang Perlu Dicek</h3><div class="table-wrap"><table><thead><tr><th>Kode</th><th>Nama Barang</th><th>Kategori</th><th>Stok</th><th>Minimum</th><th>Rak</th><th>Status</th></tr></thead><tbody id="lowStockTable"></tbody></table></div></div>
-      </section>
+<div class="grid no-print">
+<div class="card">
+<h3>Total Barang</h3>
+<h2>128</h2>
+</div>
+<div class="card">
+<h3>Total Supplier</h3>
+<h2>12</h2>
+</div>
+<div class="card">
+<h3>Barang Menipis</h3>
+<h2>8</h2>
+</div>
+<div class="card">
+<h3>Update</h3>
+<h2 id="tanggal"></h2>
+</div>
+</div>
 
-      <section id="items" class="page">
-        <div class="toolbar"><h2 class="content-title">Data Barang</h2><button id="btnAddItem" class="btn btn-primary" onclick="openItemModal()">Tambah Barang</button></div>
-        <div class="card table-wrap"><table><thead><tr><th>Kode</th><th>Nama Barang</th><th>Kategori</th><th>Merek</th><th>Supplier</th><th>Stok</th><th>Rak</th><th>Harga Modal</th><th>Harga Jual</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="itemTable"></tbody></table></div>
-      </section>
+<div class="card no-print">
+<h2>Kategori & Merek</h2>
 
-      <section id="in" class="page">
-        <h2 class="content-title">Barang Masuk</h2>
-        <div class="two-col">
-          <form class="card" onsubmit="saveMove(event,'IN')">
-            <div class="field"><label>Tanggal</label><input id="inDate" type="date" required></div>
-            <div class="field"><label>Barang</label><select id="inItem" required></select></div>
-            <div class="field"><label>Jumlah</label><input id="inQty" type="number" min="1" required></div>
-            <div class="field"><label>No. Faktur</label><input id="inInvoice" placeholder="Contoh: INV-001"></div>
-            <button class="btn btn-primary btn-full">Simpan</button>
-          </form>
-          <div class="card table-wrap"><table><thead><tr><th>Tanggal</th><th>Barang</th><th>Jumlah</th><th>Faktur</th></tr></thead><tbody id="inTable"></tbody></table></div>
-        </div>
-      </section>
+<div class="filters">
+<select id="kategori">
+<option value="">Semua Kategori</option>
+<option>Peralatan Masak</option>
+<option>Aksesoris Dapur</option>
+<option>Peralatan Makan</option>
+</select>
 
-      <section id="out" class="page">
-        <h2 class="content-title">Barang Keluar</h2>
-        <div class="two-col">
-          <form class="card" onsubmit="saveMove(event,'OUT')">
-            <div class="field"><label>Tanggal</label><input id="outDate" type="date" required></div>
-            <div class="field"><label>Barang</label><select id="outItem" onchange="showStock()" required></select></div>
-            <div class="field"><label>Stok Tersedia</label><input id="stockNow" readonly></div>
-            <div class="field"><label>Jumlah</label><input id="outQty" type="number" min="1" required></div>
-            <div class="field"><label>Keperluan</label><select id="outPurpose"><option>Penjualan</option><option>Barang Rusak</option><option>Retur Supplier</option><option>Display</option><option>Penyesuaian</option></select></div>
-            <button class="btn btn-primary btn-full">Simpan</button>
-          </form>
-          <div class="card table-wrap"><table><thead><tr><th>Tanggal</th><th>Barang</th><th>Jumlah</th><th>Keperluan</th></tr></thead><tbody id="outTable"></tbody></table></div>
-        </div>
-      </section>
+<select id="merek">
+<option value="">Semua Merek</option>
+<option>Oxone</option>
+<option>Maspion</option>
+<option>Corelle</option>
+</select>
 
-      <section id="sup" class="page">
-        <div class="toolbar">
-          <h2 class="content-title">Supplier</h2>
-          <button id="btnAddSupplier" class="btn btn-primary" onclick="openSupplierModal()">Tambah Supplier</button>
-        </div>
+<input type="text" id="search" placeholder="Cari barang...">
+</div>
 
-        <div class="filters">
-          <input id="supplierSearch" placeholder="Cari nama supplier..." oninput="renderAll()">
-          <select id="supplierStatusFilter" onchange="renderAll()">
-            <option value="">Semua Status</option>
-            <option>Aktif</option>
-            <option>Tidak Aktif</option>
-          </select>
-        </div>
+<table id="tabelBarang">
+<thead>
+<tr>
+<th>Kode</th>
+<th>Nama Barang</th>
+<th>Kategori</th>
+<th>Merek</th>
+<th>Supplier</th>
+<th>Stok</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
 
-        <div class="card table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Nama Supplier</th><th>Kontak</th><th>Alamat Supplier</th><th>Jumlah Barang</th><th>Status</th><th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="supplierTable"></tbody>
-          </table>
-        </div>
-      </section>
+<div class="card no-print">
+<h2>Supplier</h2>
 
-      <section id="master" class="page">
-        <h2 class="content-title">Kategori & Merek</h2>
+<div class="filters">
+<input type="text" placeholder="Cari supplier...">
+<button class="btn">Tambah Supplier</button>
+</div>
 
-        <div class="filters">
-          <input id="masterSearch" placeholder="Cari barang, kategori, atau merek..." oninput="renderAll()">
-          <select id="masterCategoryFilter" onchange="renderAll()"><option value="">Semua Kategori</option></select>
-          <select id="masterBrandFilter" onchange="renderAll()"><option value="">Semua Merek</option></select>
-          <button class="btn" onclick="clearMasterFilter()">Bersihkan</button>
-        </div>
+<table>
+<thead>
+<tr>
+<th>Nama Supplier</th>
+<th>Kontak</th>
+<th>Alamat Supplier</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PT Cookware Nusantara</td>
+<td>0812-7788-1122</td>
+<td>Jl. Gatot Subroto, Medan</td>
+<td><span class="badge green">Aktif</span></td>
+</tr>
+<tr>
+<td>KitchenPro</td>
+<td>0813-8899-1122</td>
+<td>Jl. Sudirman, Jakarta</td>
+<td><span class="badge orange">Tidak Aktif</span></td>
+</tr>
+</tbody>
+</table>
+</div>
 
-        <div class="two-col">
-          <div class="card"><h3>Rekap Kategori</h3><br><div id="categoryList"></div></div>
-          <div class="card"><h3>Rekap Merek</h3><br><div id="brandList"></div></div>
-        </div>
+<div class="card">
+<div class="no-print" style="display:flex;justify-content:space-between;align-items:center">
+<h2>Laporan Pergudangan</h2>
+<div>
+<button class="btn" onclick="window.print()">Print Laporan</button>
+</div>
+</div>
 
-        <div class="card table-wrap" style="margin-top:14px">
-          <h3>Barang Sesuai Kategori & Merek</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Kode</th>
-                <th>Nama Barang</th>
-                <th>Kategori</th>
-                <th>Merek</th>
-                <th>Supplier</th>
-                <th>Stok</th>
-                <th>Rak</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="masterProductTable"></tbody>
-          </table>
-        </div>
-      </section>
+<div class="print-area">
+<h1>LAPORAN INVENTORY GUDANG KITCHENWARE</h1>
+<p style="text-align:center">Periode Bulanan</p>
 
-      <section id="report" class="page">
-        <div class="toolbar"><h2 class="content-title">Laporan</h2><div><button class="btn" onclick="exportExcel()">Export Excel</button><button class="btn" onclick="printReport()">Print Laporan</button></div></div>
-        <div class="card table-wrap"><table><thead><tr><th>Kode</th><th>Nama Barang</th><th>Kategori</th><th>Stok</th><th>Nilai Modal</th><th>Nilai Jual</th><th>Status</th></tr></thead><tbody id="reportTable"></tbody></table></div>
+<table class="print-table">
+<thead>
+<tr>
+<th>Kode</th>
+<th>Nama Barang</th>
+<th>Kategori</th>
+<th>Merek</th>
+<th>Supplier</th>
+<th>Stok</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody id="printBody"></tbody>
+</table>
 
-        <div id="printArea" class="print-area">
-          <h1>LAPORAN INVENTORY TOKO KITCHENWARE</h1>
-          <p id="printDate"></p>
+<br><br>
 
-          <table class="print-summary">
-            <tbody id="printSummary"></tbody>
-          </table>
+<table style="width:100%;border:none">
+<tr>
+<td style="border:none;text-align:center">
+Diperiksa Oleh<br><br><br>
+( Admin Gudang )
+</td>
 
-          <table class="print-table">
-            <thead>
-              <tr>
-                <th>Kode</th>
-                <th>Nama Barang</th>
-                <th>Kategori</th>
-                <th>Merek</th>
-                <th>Supplier</th>
-                <th>Stok</th>
-                <th>Harga Modal</th>
-                <th>Harga Jual</th>
-                <th>Nilai Modal</th>
-                <th>Nilai Jual</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="printTable"></tbody>
-          </table>
-        </div>
-      </section>
-    </main>
-  </div>
+<td style="border:none;text-align:center">
+Disetujui Oleh<br><br><br>
+( Pemilik Toko )
+</td>
+</tr>
+</table>
 
-  <div id="itemModal" class="modal-bg hide">
-    <form class="modal" onsubmit="saveItem(event)">
-      <div class="modal-head"><h2 id="modalTitle">Tambah Barang</h2><button type="button" class="close" onclick="closeItemModal()">×</button></div>
-      <input id="editId" type="hidden">
-      <div class="form-grid">
-        <div><label>Nama Barang</label><input id="itemName" required></div>
-        <div><label>Kategori</label><select id="cat" required></select></div>
-        <div><label>Merek</label><select id="brand" required></select></div>
-        <div><label>Supplier</label><select id="supplier" required></select></div>
-        <div><label>Lokasi Rak</label><select id="rack" required></select></div>
-        <div><label>Stok</label><input id="stock" type="number" min="0" required></div>
-        <div><label>Minimum Stok</label><input id="minStock" type="number" min="0" required></div>
-        <div><label>Harga Modal</label><input id="buy" type="number" min="0" required></div>
-        <div><label>Harga Jual</label><input id="sell" type="number" min="0" required></div>
-      </div>
-      <div class="modal-actions"><button type="button" class="btn" onclick="closeItemModal()">Batal</button><button class="btn btn-primary">Simpan</button></div>
-    </form>
-  </div>
+</div>
+</div>
 
-
-  <div id="supplierModal" class="modal-bg hide">
-    <form class="modal" onsubmit="saveSupplier(event)">
-      <div class="modal-head">
-        <h2 id="supplierModalTitle">Tambah Supplier</h2>
-        <button type="button" class="close" onclick="closeSupplierModal()">×</button>
-      </div>
-
-      <input id="editSupplierId" type="hidden">
-
-      <div class="form-grid">
-        <div>
-          <label>Nama Supplier</label>
-          <input id="supplierNameInput" required placeholder="Contoh: PT Cookware Nusantara">
-        </div>
-        <div>
-          <label>Kontak / No. HP</label>
-          <input id="supplierContactInput" placeholder="Contoh: 0812-3456-7890">
-        </div>
-        <div>
-          <label>Alamat</label>
-          <input id="supplierAddressInput" placeholder="Contoh: Medan">
-        </div>
-        <div>
-          <label>Status</label>
-          <select id="supplierStatusInput">
-            <option>Aktif</option>
-            <option>Tidak Aktif</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button type="button" class="btn" onclick="closeSupplierModal()">Batal</button>
-        <button class="btn btn-primary">Simpan</button>
-      </div>
-    </form>
-  </div>
-
-  <div id="toast" class="toast"></div>
+</div>
 
 <script>
-const SUPABASE_URL = "https://hlzgmpuipjzwrnyoporr.supabase.co";
-const SUPABASE_KEY = "sb_publishable_gVMZrLFrlSuXBpWA7g0YOQ_DUb_oY-T";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+document.getElementById("tanggal").innerText =
+new Date().toLocaleDateString("id-ID");
 
-let currentRole="admin";
-let charts={};
-let db={categories:[],brands:[],racks:[],suppliers:[],items:[],moves:[]};
-const accounts={"admin123":{role:"Admin",name:"Petugas Gudang",key:"admin"},"manager123":{role:"Manajer",name:"Manajer Toko",key:"manager"},"owner123":{role:"Pemilik",name:"Pemilik Toko",key:"owner"}};
+const data = [
+{
+kode:"KW001",
+nama:"Panci Stainless",
+kategori:"Peralatan Masak",
+merek:"Oxone",
+supplier:"PT Cookware Nusantara",
+stok:54
+},
+{
+kode:"KW002",
+nama:"Spatula Kayu",
+kategori:"Aksesoris Dapur",
+merek:"Maspion",
+supplier:"KitchenPro",
+stok:12
+},
+{
+kode:"KW003",
+nama:"Piring Keramik",
+kategori:"Peralatan Makan",
+merek:"Corelle",
+supplier:"PT Cookware Nusantara",
+stok:0
+}
+];
 
-function rupiah(n){return "Rp"+new Intl.NumberFormat("id-ID").format(n||0)}
-function num(n){return new Intl.NumberFormat("id-ID").format(n||0)}
-function statusItem(i){if(i.current_stock<=0)return "Habis"; if(i.current_stock<=i.minimum_stock)return "Menipis"; return "Normal"}
-function badge(s){let c=s==="Normal"?"green":s==="Menipis"?"orange":"red";return `<span class="badge ${c}">${s}</span>`}
-function toastMsg(m){toast.textContent=m;toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),2200)}
-function today(){return new Date().toISOString().slice(0,10)}
-function categoryName(id){return (db.categories.find(x=>x.id==id)||{}).name||"-"}
-function brandName(id){return (db.brands.find(x=>x.id==id)||{}).name||"-"}
-function supplierName(id){return (db.suppliers.find(x=>x.id==id)||{}).name||"-"}
-function rackCode(id){return (db.racks.find(x=>x.id==id)||{}).code||"-"}
-function getItemName(id){return (db.items.find(i=>i.id==id)||{}).name||"-"}
-
-async function loadData(){
-  const [cat,brand,sup,rack,prod,mov] = await Promise.all([
-    sb.from("categories").select("*").order("name"),
-    sb.from("brands").select("*").order("name"),
-    sb.from("suppliers").select("*").order("name"),
-    sb.from("rack_locations").select("*").order("code"),
-    sb.from("products").select("*").order("id"),
-    sb.from("stock_movements").select("*").order("id")
-  ]);
-
-  if(prod.error){toastMsg("Gagal mengambil data Supabase"); console.error(prod.error); return;}
-
-  db.categories=cat.data||[];
-  db.brands=brand.data||[];
-  db.suppliers=sup.data||[];
-  db.racks=rack.data||[];
-  db.items=prod.data||[];
-  db.moves=mov.data||[];
-  renderAll();
+function statusBarang(stok){
+if(stok===0) return '<span class="badge red">Habis</span>';
+if(stok<=20) return '<span class="badge orange">Menipis</span>';
+return '<span class="badge green">Normal</span>';
 }
 
-function login(e){
-  e.preventDefault();
-  const acc=accounts[password.value.trim()];
-  if(!acc){loginError.classList.remove("hide");return}
-  currentRole=acc.key;
-  roleName.textContent=acc.role;
-  userNameText.textContent=username.value.trim()||acc.name;
-  loginError.classList.add("hide");
-  loginPage.classList.add("hide");
-  app.classList.remove("hide");
-  applyAccess();
-  loadData();
-}
-function logout(){app.classList.add("hide");loginPage.classList.remove("hide");password.value=""}
-function applyAccess(){
-  const isAdmin=currentRole==="admin";
-  document.querySelector('[data-page="in"]').style.display=isAdmin?"block":"none";
-  document.querySelector('[data-page="out"]').style.display=isAdmin?"block":"none";
-  btnAddItem.style.display=isAdmin?"inline-block":"none";
-  if (document.getElementById("btnAddSupplier")) {
-    btnAddSupplier.style.display = isAdmin ? "inline-block" : "none";
-  }
-}
-function openPage(id,btn){
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
-  document.querySelectorAll(".menu button").forEach(b=>b.classList.remove("active"));
-  if(btn)btn.classList.add("active");
-  renderAll();
-}
-function clearFilter(){searchText.value="";fCategory.value="";fBrand.value="";fSupplier.value="";fStatus.value="";renderAll()}
-function clearMasterFilter(){masterSearch.value="";masterCategoryFilter.value="";masterBrandFilter.value="";renderAll()}
+function render(){
+const kategori = document.getElementById("kategori").value;
+const merek = document.getElementById("merek").value;
+const search = document.getElementById("search").value.toLowerCase();
 
-function fillSelect(el,data,label,keyName="name"){
-  const before=el.value;
-  el.innerHTML=`<option value="">${label}</option>`+data.map(x=>`<option value="${x.id}">${x[keyName]}</option>`).join("");
-  el.value=before;
-}
-function fillItem(el){
-  const before=el.value;
-  el.innerHTML=`<option value="">Pilih barang</option>`+db.items.map(i=>`<option value="${i.id}">${i.sku} - ${i.name}</option>`).join("");
-  el.value=before;
-}
-function setupSelects(){
-  fillSelect(fCategory,db.categories,"Semua Kategori","name");
-  fillSelect(fBrand,db.brands,"Semua Merek","name");
-  fillSelect(fSupplier,db.suppliers,"Semua Supplier","name");
-  fillSelect(cat,db.categories,"Pilih kategori","name");
-  fillSelect(brand,db.brands,"Pilih merek","name");
-  fillSelect(supplier,db.suppliers,"Pilih supplier","name");
-  fillSelect(rack,db.racks,"Pilih rak","code");
-  masterCategoryFilter.innerHTML='<option value="">Semua Kategori</option>'+db.categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
-  masterBrandFilter.innerHTML='<option value="">Semua Merek</option>'+db.brands.map(b=>`<option value="${b.id}">${b.name}</option>`).join("");
-  fillItem(inItem); fillItem(outItem);
-  if(!inDate.value)inDate.value=today();
-  if(!outDate.value)outDate.value=today();
-  todayText.textContent=new Date().toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-}
-function filteredItems(){
-  const q=(searchText.value||"").toLowerCase(), fs=fSupplier.value, fb=fBrand.value, fc=fCategory.value, fst=fStatus.value;
-  return db.items.filter(i=>
-    (!q||i.name.toLowerCase().includes(q)||i.sku.toLowerCase().includes(q)) &&
-    (!fs||String(i.supplier_id)===String(fs)) &&
-    (!fb||String(i.brand_id)===String(fb)) &&
-    (!fc||String(i.category_id)===String(fc)) &&
-    (!fst||statusItem(i)===fst)
-  );
-}
-function renderAll(){setupSelects();renderTables();renderDashboard();showStock()}
+const hasil = data.filter(i=>{
+return (
+(!kategori || i.kategori===kategori) &&
+(!merek || i.merek===merek) &&
+(!search || i.nama.toLowerCase().includes(search))
+);
+});
 
-function renderTables(){
-  const items=filteredItems();
-  itemTable.innerHTML=items.map(i=>`
-    <tr><td>${i.sku}</td><td>${i.name}</td><td>${categoryName(i.category_id)}</td><td>${brandName(i.brand_id)}</td><td>${supplierName(i.supplier_id)}</td>
-    <td><b>${num(i.current_stock)}</b></td><td>${rackCode(i.rack_id)}</td><td>${rupiah(i.purchase_price)}</td><td>${rupiah(i.selling_price)}</td><td>${badge(statusItem(i))}</td>
-    <td>${currentRole==="admin"?`<button class="btn" onclick="openItemModal(${i.id})">Edit</button> <button class="btn btn-danger" onclick="deleteItem(${i.id})">Hapus</button>`:"-"}</td></tr>`).join("");
+document.querySelector("#tabelBarang tbody").innerHTML =
+hasil.map(i=>`
+<tr>
+<td>${i.kode}</td>
+<td>${i.nama}</td>
+<td>${i.kategori}</td>
+<td>${i.merek}</td>
+<td>${i.supplier}</td>
+<td>${i.stok}</td>
+<td>${statusBarang(i.stok)}</td>
+</tr>
+`).join("");
 
-  reportTable.innerHTML=items.map(i=>`<tr><td>${i.sku}</td><td>${i.name}</td><td>${categoryName(i.category_id)}</td><td>${i.current_stock}</td><td>${rupiah(i.current_stock*i.purchase_price)}</td><td>${rupiah(i.current_stock*i.selling_price)}</td><td>${badge(statusItem(i))}</td></tr>`).join("");
-
-  const supplierKeyword=(supplierSearch?.value||"").toLowerCase();
-  const supplierStatus=(document.getElementById("supplierStatusFilter")?.value||"");
-
-  supplierTable.innerHTML=db.suppliers
-    .filter(s =>
-      s.name.toLowerCase().includes(supplierKeyword) &&
-      (!supplierStatus || (s.status || "Aktif") === supplierStatus)
-    )
-    .map(s=>`
-      <tr>
-        <td>${s.name}</td>
-        <td>${s.contact||"-"}</td>
-        <td>${s.address && s.address.trim() ? s.address : "-"}</td>
-        <td>${db.items.filter(i=>i.supplier_id===s.id).length}</td>
-        <td><span class="badge ${(s.status||"Aktif")==="Aktif"?"green":"orange"}">${s.status||"Aktif"}</span></td>
-        <td>
-          ${currentRole==="admin"
-            ? `<button class="btn" onclick="openSupplierModal(${s.id})">Edit</button> <button class="btn btn-danger" onclick="deleteSupplier(${s.id})">Hapus</button>`
-            : "-"
-          }
-        </td>
-      </tr>
-    `).join("") || `<tr><td colspan="6">Supplier tidak ditemukan.</td></tr>`;
-
-  const masterKeyword=(masterSearch?.value||"").toLowerCase();
-  const masterCat=masterCategoryFilter?.value||"";
-  const masterBrand=masterBrandFilter?.value||"";
-
-  const masterItems = db.items.filter(i => {
-    const nama = (i.name || "").toLowerCase();
-    const kategori = categoryName(i.category_id).toLowerCase();
-    const merek = brandName(i.brand_id).toLowerCase();
-
-    return (
-      (!masterKeyword || nama.includes(masterKeyword) || kategori.includes(masterKeyword) || merek.includes(masterKeyword)) &&
-      (!masterCat || String(i.category_id) === String(masterCat)) &&
-      (!masterBrand || String(i.brand_id) === String(masterBrand))
-    );
-  });
-
-  categoryList.innerHTML = db.categories.map(c => {
-    const total = masterItems.filter(i => i.category_id === c.id).length;
-    if (total === 0 && (masterCat || masterBrand || masterKeyword)) return "";
-    return `<p style="padding:9px;border-bottom:1px solid #e5edf5"><b>${c.name}</b> - ${total} barang</p>`;
-  }).join("") || `<p style="padding:9px;color:#64748b">Tidak ada kategori yang sesuai.</p>`;
-
-  brandList.innerHTML = db.brands.map(b => {
-    const total = masterItems.filter(i => i.brand_id === b.id).length;
-    if (total === 0 && (masterCat || masterBrand || masterKeyword)) return "";
-    return `<p style="padding:9px;border-bottom:1px solid #e5edf5"><b>${b.name}</b> - ${total} barang</p>`;
-  }).join("") || `<p style="padding:9px;color:#64748b">Tidak ada merek yang sesuai.</p>`;
-
-  masterProductTable.innerHTML = masterItems.map(i => `
-    <tr>
-      <td>${i.sku}</td>
-      <td>${i.name}</td>
-      <td>${categoryName(i.category_id)}</td>
-      <td>${brandName(i.brand_id)}</td>
-      <td>${supplierName(i.supplier_id)}</td>
-      <td><b>${num(i.current_stock)}</b></td>
-      <td>${rackCode(i.rack_id)}</td>
-      <td>${badge(statusItem(i))}</td>
-    </tr>
-  `).join("") || `<tr><td colspan="8">Tidak ada barang yang sesuai dengan filter.</td></tr>`;inTable.innerHTML=db.moves.filter(m=>m.movement_type==="IN").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge green">+${m.quantity}</span></td><td>${m.invoice_number||"-"}</td></tr>`).join("");
-  outTable.innerHTML=db.moves.filter(m=>m.movement_type==="OUT").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge red">-${m.quantity}</span></td><td>${m.purpose||"-"}</td></tr>`).join("");
-  lowStockTable.innerHTML=items.filter(i=>statusItem(i)!=="Normal").map(i=>`<tr><td>${i.sku}</td><td>${i.name}</td><td>${categoryName(i.category_id)}</td><td>${i.current_stock}</td><td>${i.minimum_stock}</td><td>${rackCode(i.rack_id)}</td><td>${badge(statusItem(i))}</td></tr>`).join("") || `<tr><td colspan="7">Tidak ada barang yang menipis.</td></tr>`;
+document.getElementById("printBody").innerHTML =
+hasil.map(i=>`
+<tr>
+<td>${i.kode}</td>
+<td>${i.nama}</td>
+<td>${i.kategori}</td>
+<td>${i.merek}</td>
+<td>${i.supplier}</td>
+<td>${i.stok}</td>
+<td>${i.stok===0?'Habis':i.stok<=20?'Menipis':'Normal'}</td>
+</tr>
+`).join("");
 }
 
-function makeChart(id,type,labels,data,label){
-  if(charts[id])charts[id].destroy();
-  charts[id]=new Chart(document.getElementById(id),{type,data:{labels,datasets:[{label,data,borderWidth:2,tension:.35}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:type==="doughnut"}}}});
-}
-function renderDashboard(){
-  const items=filteredItems();
-  const totalIn=db.moves.filter(m=>m.movement_type==="IN").reduce((a,m)=>a+m.quantity,0);
-  const totalOut=db.moves.filter(m=>m.movement_type==="OUT").reduce((a,m)=>a+m.quantity,0);
-  const low=items.filter(i=>statusItem(i)!=="Normal").length;
-  const value=items.reduce((a,i)=>a+i.current_stock*i.purchase_price,0);
-  kpiItems.textContent=items.length;
-  kpiStock.textContent=num(items.reduce((a,i)=>a+i.current_stock,0));
-  kpiIn.textContent=num(totalIn);
-  kpiOut.textContent=num(totalOut);
-  kpiLow.textContent=low;
-  kpiValue.textContent=rupiah(value);
+document.getElementById("kategori").addEventListener("change",render);
+document.getElementById("merek").addEventListener("change",render);
+document.getElementById("search").addEventListener("input",render);
 
-  if(charts.movementChart)charts.movementChart.destroy();
-  charts.movementChart=new Chart(movementChart,{type:"bar",data:{labels:["Barang Masuk","Barang Keluar"],datasets:[{label:"Jumlah",data:[totalIn,totalOut],borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-  const st=["Normal","Menipis","Habis"];
-  makeChart("statusChart","doughnut",st,st.map(s=>items.filter(i=>statusItem(i)===s).length),"Status");
-  makeChart("categoryChart","bar",db.categories.map(c=>c.name),db.categories.map(c=>items.filter(i=>i.category_id===c.id).reduce((a,i)=>a+i.current_stock,0)),"Stok");
-  makeChart("rackChart","bar",db.racks.map(r=>r.code),db.racks.map(r=>items.filter(i=>i.rack_id===r.id).length),"Jumlah Barang");
-
-  let info="Menampilkan seluruh data inventory kitchenware.";
-  if(fBrand.value){
-    const b=brandName(Number(fBrand.value));
-    const brandItems=items.filter(i=>String(i.brand_id)===String(fBrand.value));
-    const cats=[...new Set(brandItems.map(i=>categoryName(i.category_id)))];
-    info=`Merek ${b} memiliki ${brandItems.length} barang dalam kategori: ${cats.join(", ")||"-"}.`;
-  }
-  if(fCategory.value){
-    const c=categoryName(Number(fCategory.value));
-    info=`Kategori ${c} menampilkan ${items.length} barang.`;
-  }}
-
-async function nextSku(){
-  const nums=db.items.map(i=>Number(String(i.sku).replace("KW",""))||0);
-  return "KW"+String(Math.max(...nums,0)+1).padStart(3,"0");
-}
-function openItemModal(id){
-  if(currentRole!=="admin"){toastMsg("Akses tambah/edit hanya untuk Admin");return}
-  itemModal.classList.remove("hide"); setupSelects();
-  editId.value=id||""; modalTitle.textContent=id?"Edit Barang":"Tambah Barang";
-  if(id){
-    const i=db.items.find(x=>x.id===id);
-    itemName.value=i.name; cat.value=i.category_id; brand.value=i.brand_id; supplier.value=i.supplier_id; rack.value=i.rack_id; stock.value=i.current_stock; minStock.value=i.minimum_stock; buy.value=i.purchase_price; sell.value=i.selling_price;
-  }else{
-    [itemName,stock,minStock,buy,sell].forEach(x=>x.value="");
-  }
-}
-function closeItemModal(){itemModal.classList.add("hide")}
-async function saveItem(e){
-  e.preventDefault();
-  const id=editId.value?Number(editId.value):null;
-  const payload={
-    name:itemName.value.trim(),
-    category_id:Number(cat.value),
-    brand_id:Number(brand.value),
-    supplier_id:Number(supplier.value),
-    rack_id:Number(rack.value),
-    current_stock:Number(stock.value),
-    minimum_stock:Number(minStock.value),
-    unit:"pcs",
-    purchase_price:Number(buy.value),
-    selling_price:Number(sell.value)
-  };
-  if(id){
-    const {error}=await sb.from("products").update(payload).eq("id",id);
-    if(error){toastMsg("Gagal menyimpan data"); console.error(error); return;}
-  }else{
-    payload.sku=await nextSku();
-    const {error}=await sb.from("products").insert(payload);
-    if(error){toastMsg("Gagal menambah barang"); console.error(error); return;}
-  }
-  closeItemModal(); await loadData(); toastMsg("Data barang tersimpan");
-}
-async function deleteItem(id){
-  if(!confirm("Hapus data barang ini?"))return;
-  const {error}=await sb.from("products").delete().eq("id",id);
-  if(error){toastMsg("Gagal menghapus data"); console.error(error); return;}
-  await loadData(); toastMsg("Data barang dihapus");
-}
-async function saveMove(e,type){
-  e.preventDefault();
-  if(currentRole!=="admin"){toastMsg("Akses hanya untuk Admin");return}
-  const itemId=Number(type==="IN"?inItem.value:outItem.value);
-  const qty=Number(type==="IN"?inQty.value:outQty.value);
-  if(!itemId||qty<=0){toastMsg("Jumlah belum sesuai");return}
-  const payload={
-    product_id:itemId,
-    movement_type:type,
-    quantity:qty,
-    movement_date:type==="IN"?inDate.value:outDate.value,
-    invoice_number:type==="IN"?inInvoice.value:null,
-    purpose:type==="OUT"?outPurpose.value:"Restock"
-  };
-  const {error}=await sb.from("stock_movements").insert(payload);
-  if(error){toastMsg(error.message.includes("Stok")?"Stok tidak mencukupi":"Gagal menyimpan transaksi"); console.error(error); return;}
-  e.target.reset(); inDate.value=today(); outDate.value=today();
-  await loadData();
-  toastMsg(type==="IN"?"Barang masuk tersimpan":"Barang keluar tersimpan");
-}
-function showStock(){
-  const i=db.items.find(x=>x.id==outItem.value);
-  stockNow.value=i?`${i.current_stock} ${i.unit}`:"";
-}
-
-function openSupplierModal(id){
-  if(currentRole !== "admin"){
-    toastMsg("Akses supplier hanya untuk Admin");
-    return;
-  }
-
-  supplierModal.classList.remove("hide");
-  editSupplierId.value = id || "";
-  supplierModalTitle.textContent = id ? "Edit Supplier" : "Tambah Supplier";
-
-  if(id){
-    const s = db.suppliers.find(x => x.id === id);
-    supplierNameInput.value = s?.name || "";
-    supplierContactInput.value = s?.contact || "";
-    supplierAddressInput.value = s?.address || "";
-    supplierStatusInput.value = s?.status || "Aktif";
-  } else {
-    supplierNameInput.value = "";
-    supplierContactInput.value = "";
-    supplierAddressInput.value = "";
-    supplierStatusInput.value = "Aktif";
-  }
-}
-
-function closeSupplierModal(){
-  supplierModal.classList.add("hide");
-}
-
-async function saveSupplier(e){
-  e.preventDefault();
-
-  if(currentRole !== "admin"){
-    toastMsg("Akses supplier hanya untuk Admin");
-    return;
-  }
-
-  const id = editSupplierId.value ? Number(editSupplierId.value) : null;
-
-  const payload = {
-    name: supplierNameInput.value.trim(),
-    contact: supplierContactInput.value.trim(),
-    address: supplierAddressInput.value.trim(),
-    status: supplierStatusInput.value
-  };
-
-  if(!payload.name){
-    toastMsg("Nama supplier wajib diisi");
-    return;
-  }
-
-  let result;
-  if(id){
-    result = await sb.from("suppliers").update(payload).eq("id", id);
-  } else {
-    result = await sb.from("suppliers").insert(payload);
-  }
-
-  if(result.error){
-    toastMsg("Gagal menyimpan supplier");
-    console.error(result.error);
-    return;
-  }
-
-  closeSupplierModal();
-  await loadData();
-  toastMsg(id ? "Supplier berhasil diperbarui" : "Supplier berhasil ditambahkan");
-}
-
-async function deleteSupplier(id){
-  if(currentRole !== "admin"){
-    toastMsg("Akses supplier hanya untuk Admin");
-    return;
-  }
-
-  const used = db.items.some(i => i.supplier_id === id);
-  if(used){
-    toastMsg("Supplier masih digunakan oleh data barang");
-    return;
-  }
-
-  if(!confirm("Hapus supplier ini?")) return;
-
-  const { error } = await sb.from("suppliers").delete().eq("id", id);
-
-  if(error){
-    toastMsg("Gagal menghapus supplier");
-    console.error(error);
-    return;
-  }
-
-  await loadData();
-  toastMsg("Supplier berhasil dihapus");
-}
-
-function buildReportRows(){
-  return filteredItems().map(i => ({
-    kode: i.sku,
-    nama: i.name,
-    kategori: categoryName(i.category_id),
-    merek: brandName(i.brand_id),
-    supplier: supplierName(i.supplier_id),
-    stok: Number(i.current_stock),
-    hargaModal: Number(i.purchase_price),
-    hargaJual: Number(i.selling_price),
-    nilaiModal: Number(i.current_stock) * Number(i.purchase_price),
-    nilaiJual: Number(i.current_stock) * Number(i.selling_price),
-    status: statusItem(i)
-  }));
-}
-
-function buildReportSummary(rows){
-  return {
-    totalBarang: rows.length,
-    totalStok: rows.reduce((a, i) => a + i.stok, 0),
-    totalModal: rows.reduce((a, i) => a + i.nilaiModal, 0),
-    totalJual: rows.reduce((a, i) => a + i.nilaiJual, 0),
-    stokMenipis: rows.filter(i => i.status !== "Normal").length
-  };
-}
-
-function exportExcel(){
-  const rowsData = buildReportRows();
-  const now = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-  const summary = buildReportSummary(rowsData);
-
-  const rows = [
-    ["LAPORAN INVENTORY TOKO KITCHENWARE"],
-    ["Tanggal Cetak", now],
-    [],
-    ["Ringkasan"],
-    ["Total Jenis Barang", summary.totalBarang],
-    ["Total Stok Gudang", summary.totalStok],
-    ["Total Nilai Modal", summary.totalModal],
-    ["Total Estimasi Nilai Jual", summary.totalJual],
-    ["Barang Menipis/Habis", summary.stokMenipis],
-    [],
-    ["Kode Barang","Nama Barang","Kategori","Merek","Supplier","Stok","Harga Modal","Harga Jual","Nilai Modal","Nilai Jual","Status"],
-    ...rowsData.map(i => [i.kode,i.nama,i.kategori,i.merek,i.supplier,i.stok,i.hargaModal,i.hargaJual,i.nilaiModal,i.nilaiJual,i.status])
-  ];
-
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  ws["!merges"] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
-    { s: { r: 3, c: 0 }, e: { r: 3, c: 1 } }
-  ];
-  ws["!cols"] = [
-    { wch: 14 }, { wch: 30 }, { wch: 22 }, { wch: 16 }, { wch: 28 },
-    { wch: 10 }, { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 16 }
-  ];
-  ws["!autofilter"] = { ref: `A11:K${rows.length}` };
-
-  const titleStyle = { font: { bold: true, sz: 16, color: { rgb: "FFFFFF" } }, fill: { fgColor: { rgb: "1F5F99" } }, alignment: { horizontal: "center", vertical: "center" } };
-  const sectionStyle = { font: { bold: true, color: { rgb: "17324D" } }, fill: { fgColor: { rgb: "DDEBFA" } } };
-  const headerStyle = {
-    font: { bold: true, color: { rgb: "FFFFFF" } },
-    fill: { fgColor: { rgb: "17324D" } },
-    alignment: { horizontal: "center", vertical: "center", wrapText: true },
-    border: {
-      top: { style: "thin", color: { rgb: "B7C4D2" } },
-      bottom: { style: "thin", color: { rgb: "B7C4D2" } },
-      left: { style: "thin", color: { rgb: "B7C4D2" } },
-      right: { style: "thin", color: { rgb: "B7C4D2" } }
-    }
-  };
-  const cellBorder = {
-    top: { style: "thin", color: { rgb: "D9E2EC" } },
-    bottom: { style: "thin", color: { rgb: "D9E2EC" } },
-    left: { style: "thin", color: { rgb: "D9E2EC" } },
-    right: { style: "thin", color: { rgb: "D9E2EC" } }
-  };
-
-  ws["A1"].s = titleStyle;
-  ws["A4"].s = sectionStyle;
-
-  for (let r = 4; r <= 8; r++) {
-    const a = `A${r + 1}`, b = `B${r + 1}`;
-    if (ws[a]) ws[a].s = { font: { bold: true }, fill: { fgColor: { rgb: "F3F7FC" } }, border: cellBorder };
-    if (ws[b]) ws[b].s = { border: cellBorder };
-  }
-
-  for (let c = 0; c <= 10; c++) {
-    const cell = XLSX.utils.encode_cell({ r: 10, c });
-    if (ws[cell]) ws[cell].s = headerStyle;
-  }
-
-  for (let r = 11; r < rows.length; r++) {
-    for (let c = 0; c <= 10; c++) {
-      const cell = XLSX.utils.encode_cell({ r, c });
-      if (!ws[cell]) continue;
-      ws[cell].s = { border: cellBorder, alignment: { vertical: "center", wrapText: true } };
-      if (c >= 6 && c <= 9) ws[cell].z = '"Rp"#,##0';
-      if (c === 10) {
-        const status = ws[cell].v;
-        if (status === "Normal") {
-          ws[cell].s.fill = { fgColor: { rgb: "DFF7E8" } };
-          ws[cell].s.font = { bold: true, color: { rgb: "16803C" } };
-        } else if (status === "Menipis") {
-          ws[cell].s.fill = { fgColor: { rgb: "FFF0C2" } };
-          ws[cell].s.font = { bold: true, color: { rgb: "A66300" } };
-        } else {
-          ws[cell].s.fill = { fgColor: { rgb: "FFE0DF" } };
-          ws[cell].s.font = { bold: true, color: { rgb: "B42318" } };
-        }
-      }
-    }
-  }
-
-  const summaryRows = [
-    ["RINGKASAN LAPORAN INVENTORY"],
-    ["Tanggal Cetak", now],
-    ["Total Jenis Barang", summary.totalBarang],
-    ["Total Stok Gudang", summary.totalStok],
-    ["Total Nilai Modal", summary.totalModal],
-    ["Total Estimasi Nilai Jual", summary.totalJual],
-    ["Barang Menipis/Habis", summary.stokMenipis]
-  ];
-
-  const ws2 = XLSX.utils.aoa_to_sheet(summaryRows);
-  ws2["!cols"] = [{ wch: 28 }, { wch: 24 }];
-  ws2["!merges"] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
-  ws2["A1"].s = titleStyle;
-
-  for (let r = 1; r < summaryRows.length; r++) {
-    const a = `A${r + 1}`, b = `B${r + 1}`;
-    if (ws2[a]) ws2[a].s = { font: { bold: true }, fill: { fgColor: { rgb: "F3F7FC" } }, border: cellBorder };
-    if (ws2[b]) {
-      ws2[b].s = { border: cellBorder };
-      if (r === 4 || r === 5) ws2[b].z = '"Rp"#,##0';
-    }
-  }
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Laporan Inventory");
-  XLSX.utils.book_append_sheet(wb, ws2, "Ringkasan");
-  XLSX.writeFile(wb, "laporan_inventory_kitchenware.xlsx");
-}
-
-function printReport(){
-  const rows = buildReportRows();
-  const summary = buildReportSummary(rows);
-  const now = new Date().toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
-
-  printDate.textContent = "Tanggal Cetak: " + now;
-
-  printSummary.innerHTML = `
-    <tr><td>Total Jenis Barang</td><td>${summary.totalBarang}</td></tr>
-    <tr><td>Total Stok Gudang</td><td>${num(summary.totalStok)}</td></tr>
-    <tr><td>Total Nilai Modal</td><td>${rupiah(summary.totalModal)}</td></tr>
-    <tr><td>Total Estimasi Nilai Jual</td><td>${rupiah(summary.totalJual)}</td></tr>
-    <tr><td>Barang Menipis/Habis</td><td>${summary.stokMenipis}</td></tr>
-  `;
-
-  printTable.innerHTML = rows.map(i => `
-    <tr>
-      <td>${i.kode}</td>
-      <td>${i.nama}</td>
-      <td>${i.kategori}</td>
-      <td>${i.merek}</td>
-      <td>${i.supplier}</td>
-      <td>${i.stok}</td>
-      <td>${rupiah(i.hargaModal)}</td>
-      <td>${rupiah(i.hargaJual)}</td>
-      <td>${rupiah(i.nilaiModal)}</td>
-      <td>${rupiah(i.nilaiJual)}</td>
-      <td>${i.status}</td>
-    </tr>
-  `).join("");
-
-  window.print();
-}
-
-setupSelects();
+render();
 </script>
+
 </body>
 </html>
