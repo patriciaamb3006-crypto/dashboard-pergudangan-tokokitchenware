@@ -537,8 +537,6 @@ function setupSelects(){
   fillSelect(brand,db.brands,"Pilih merek","name");
   fillSelect(supplier,db.suppliers,"Pilih supplier","name");
   fillSelect(rack,db.racks,"Pilih rak","code");
-  /* masterCategoryFilter removed */='<option value="">Semua Kategori</option>'+db.categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
-  /* masterBrandFilter removed */='<option value="">Semua Merek</option>'+db.brands.map(b=>`<option value="${b.id}">${b.name}</option>`).join("");
   fillItem(inItem); fillItem(outItem);
   if(!inDate.value)inDate.value=today();
   if(!outDate.value)outDate.value=today();
