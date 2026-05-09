@@ -9,7 +9,13 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style/dist/xlsx.bundle.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:Arial,Helvetica,sans-serif;background:#eef3f8;color:#1f2937}
+    body{
+      font-family:Arial,Helvetica,sans-serif;
+      background:
+        linear-gradient(rgba(238,243,248,.92),rgba(238,243,248,.94)),
+        url("https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=1600&q=80") center/cover fixed;
+      color:#1f2937
+    }
     button,input,select,textarea{font:inherit}
     button{cursor:pointer;border:0}
     .hide{display:none!important}
@@ -80,8 +86,8 @@
     .toast{position:fixed;right:20px;bottom:20px;background:#17324d;color:white;padding:13px 16px;border-radius:8px;font-weight:700;opacity:0;transform:translateY(60px);transition:.25s;z-index:80}
     .toast.show{opacity:1;transform:translateY(0)}
 
-    .print-area{display:none}
 
+    .print-area{display:none}
     @media print{
       body{background:white!important;color:#111!important}
       .sidebar,.topbar,.toolbar,.filters,.note,.kpi-grid,.dashboard-layout,.chart-two,.table-card,.card:not(.print-keep),#loginPage{display:none!important}
@@ -89,48 +95,66 @@
       .main{padding:0!important}
       .page{display:none!important}
       #report{display:block!important}
-      #report > .content-title{display:none!important}
-      #printArea{display:block!important;padding:10px}
-      #printArea h1{
+      #printArea{display:block!important;padding:12px}
+      .report-header{
+        border-bottom:3px solid #17324d;
+        padding-bottom:10px;
+        margin-bottom:14px;
         text-align:center;
+      }
+      #printArea h1{
         font-family:Georgia,serif;
-        font-size:22px;
-        margin-bottom:6px;
+        font-size:23px;
+        margin:0 0 4px;
       }
       #printArea p{
-        text-align:center;
-        margin-bottom:16px;
+        margin:3px 0;
         font-size:12px;
       }
       .print-summary{
-        width:55%;
-        margin-bottom:16px;
+        width:56%;
         border-collapse:collapse;
+        margin-bottom:14px;
         font-size:12px;
       }
       .print-summary td{
-        border:1px solid #999;
+        border:1px solid #777;
         padding:7px;
       }
       .print-summary td:first-child{
         font-weight:bold;
-        background:#eef3f8;
+        background:#eef3f8!important;
+      }
+      .print-subtitle{
+        font-size:15px;
+        margin:12px 0 7px;
       }
       .print-table{
         width:100%;
         border-collapse:collapse;
-        font-size:10px;
+        font-size:9.5px;
       }
       .print-table th{
-        border:1px solid #777;
+        border:1px solid #555;
         padding:6px;
         background:#dbe7f7!important;
         color:#111!important;
+        text-align:center;
       }
       .print-table td{
-        border:1px solid #999;
+        border:1px solid #777;
         padding:5px;
         vertical-align:top;
+      }
+      .signature-row{
+        display:flex;
+        justify-content:space-between;
+        margin-top:28px;
+        font-size:12px;
+      }
+      .signature-row div{
+        width:34%;
+        text-align:center;
       }
       .badge{
         border:0!important;
@@ -138,11 +162,8 @@
         color:#111!important;
         padding:0!important;
       }
-      @page{
-        size: landscape;
-        margin: 8mm;
-      }
-      a[href]:after{content:""!important;}
+      a[href]:after{content:""!important}
+      @page{size:landscape;margin:8mm}
     }
 
     @media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.dashboard-layout,.chart-two,.two-col{grid-template-columns:1fr}}
@@ -266,7 +287,12 @@
           <table>
             <thead>
               <tr>
-                <th>Nama Supplier</th><th>Kontak</th><th>Alamat Supplier</th><th>Jumlah Barang</th><th>Status</th><th>Aksi</th>
+                <th>Nama Supplier</th>
+                <th>Kontak</th>
+                <th>Alamat Supplier</th>
+                <th>Jumlah Barang</th>
+                <th>Status</th>
+                <th>Aksi</th>
               </tr>
             </thead>
             <tbody id="supplierTable"></tbody>
@@ -279,8 +305,12 @@
 
         <div class="filters">
           <input id="masterSearch" placeholder="Cari barang, kategori, atau merek..." oninput="renderAll()">
-          <select id="masterCategoryFilter" onchange="renderAll()"><option value="">Semua Kategori</option></select>
-          <select id="masterBrandFilter" onchange="renderAll()"><option value="">Semua Merek</option></select>
+          <select id="masterCategoryFilter" onchange="renderAll()">
+            <option value="">Semua Kategori</option>
+          </select>
+          <select id="masterBrandFilter" onchange="renderAll()">
+            <option value="">Semua Merek</option>
+          </select>
           <button class="btn" onclick="clearMasterFilter()">Bersihkan</button>
         </div>
 
@@ -290,7 +320,7 @@
         </div>
 
         <div class="card table-wrap" style="margin-top:14px">
-          <h3>Barang Sesuai Kategori & Merek</h3>
+          <h3>Barang Sesuai Filter</h3>
           <table>
             <thead>
               <tr>
@@ -314,13 +344,16 @@
         <div class="card table-wrap"><table><thead><tr><th>Kode</th><th>Nama Barang</th><th>Kategori</th><th>Stok</th><th>Nilai Modal</th><th>Nilai Jual</th><th>Status</th></tr></thead><tbody id="reportTable"></tbody></table></div>
 
         <div id="printArea" class="print-area">
-          <h1>LAPORAN INVENTORY TOKO KITCHENWARE</h1>
-          <p id="printDate"></p>
+          <div class="report-header">
+            <h1>LAPORAN INVENTORY GUDANG KITCHENWARE</h1>
+            <p id="printDate"></p>
+          </div>
 
           <table class="print-summary">
             <tbody id="printSummary"></tbody>
           </table>
 
+          <h2 class="print-subtitle">Daftar Stok Barang</h2>
           <table class="print-table">
             <thead>
               <tr>
@@ -339,6 +372,19 @@
             </thead>
             <tbody id="printTable"></tbody>
           </table>
+
+          <div class="signature-row">
+            <div>
+              <p>Diperiksa Oleh,</p>
+              <br><br><br>
+              <b>Admin Gudang</b>
+            </div>
+            <div>
+              <p>Disetujui Oleh,</p>
+              <br><br><br>
+              <b>Pemilik Toko</b>
+            </div>
+          </div>
         </div>
       </section>
     </main>
@@ -416,7 +462,7 @@ const accounts={"admin123":{role:"Admin",name:"Petugas Gudang",key:"admin"},"man
 
 function rupiah(n){return "Rp"+new Intl.NumberFormat("id-ID").format(n||0)}
 function num(n){return new Intl.NumberFormat("id-ID").format(n||0)}
-function statusItem(i){if(i.current_stock<=0)return "Habis"; if(i.current_stock<=i.minimum_stock)return "Menipis"; return "Normal"}
+function statusItem(i){if(Number(i.current_stock)<=0)return "Habis"; if(Number(i.current_stock)<=20)return "Menipis"; return "Normal"}
 function badge(s){let c=s==="Normal"?"green":s==="Menipis"?"orange":"red";return `<span class="badge ${c}">${s}</span>`}
 function toastMsg(m){toast.textContent=m;toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),2200)}
 function today(){return new Date().toISOString().slice(0,10)}
@@ -531,8 +577,8 @@ function renderTables(){
 
   supplierTable.innerHTML=db.suppliers
     .filter(s =>
-      s.name.toLowerCase().includes(supplierKeyword) &&
-      (!supplierStatus || (s.status || "Aktif") === supplierStatus)
+      s.name.toLowerCase().includes((supplierSearch?.value||"").toLowerCase()) &&
+      (!(document.getElementById("supplierStatusFilter")?.value||"") || (s.status || "Aktif") === (document.getElementById("supplierStatusFilter")?.value||""))
     )
     .map(s=>`
       <tr>
@@ -550,46 +596,64 @@ function renderTables(){
       </tr>
     `).join("") || `<tr><td colspan="6">Supplier tidak ditemukan.</td></tr>`;
 
-  const masterKeyword=(masterSearch?.value||"").toLowerCase();
-  const masterCat=masterCategoryFilter?.value||"";
-  const masterBrand=masterBrandFilter?.value||"";
+  const masterKeyword=(document.getElementById("masterSearch")?.value||"").toLowerCase();
+  const masterCat=(document.getElementById("masterCategoryFilter")?.value||"");
+  const masterBrand=(document.getElementById("masterBrandFilter")?.value||"");
 
   const masterItems = db.items.filter(i => {
     const nama = (i.name || "").toLowerCase();
     const kategori = categoryName(i.category_id).toLowerCase();
     const merek = brandName(i.brand_id).toLowerCase();
 
-    return (
-      (!masterKeyword || nama.includes(masterKeyword) || kategori.includes(masterKeyword) || merek.includes(masterKeyword)) &&
-      (!masterCat || String(i.category_id) === String(masterCat)) &&
-      (!masterBrand || String(i.brand_id) === String(masterBrand))
-    );
+    const cocokKeyword =
+      !masterKeyword ||
+      nama.includes(masterKeyword) ||
+      kategori.includes(masterKeyword) ||
+      merek.includes(masterKeyword);
+
+    const cocokKategori =
+      !masterCat ||
+      String(i.category_id) === String(masterCat);
+
+    const cocokMerek =
+      !masterBrand ||
+      String(i.brand_id) === String(masterBrand);
+
+    return cocokKeyword && cocokKategori && cocokMerek;
   });
 
-  categoryList.innerHTML = db.categories.map(c => {
-    const total = masterItems.filter(i => i.category_id === c.id).length;
-    if (total === 0 && (masterCat || masterBrand || masterKeyword)) return "";
-    return `<p style="padding:9px;border-bottom:1px solid #e5edf5"><b>${c.name}</b> - ${total} barang</p>`;
-  }).join("") || `<p style="padding:9px;color:#64748b">Tidak ada kategori yang sesuai.</p>`;
+  categoryList.innerHTML = db.categories
+    .map(c => {
+      const total = masterItems.filter(i => i.category_id === c.id).length;
+      if(total === 0 && (masterKeyword || masterCat || masterBrand)) return "";
+      return `<p style="padding:10px;border-bottom:1px solid #e5edf5"><b>${c.name}</b> — ${total} barang</p>`;
+    })
+    .join("") || `<p style="padding:10px;color:#64748b">Data kategori tidak ditemukan.</p>`;
 
-  brandList.innerHTML = db.brands.map(b => {
-    const total = masterItems.filter(i => i.brand_id === b.id).length;
-    if (total === 0 && (masterCat || masterBrand || masterKeyword)) return "";
-    return `<p style="padding:9px;border-bottom:1px solid #e5edf5"><b>${b.name}</b> - ${total} barang</p>`;
-  }).join("") || `<p style="padding:9px;color:#64748b">Tidak ada merek yang sesuai.</p>`;
+  brandList.innerHTML = db.brands
+    .map(b => {
+      const total = masterItems.filter(i => i.brand_id === b.id).length;
+      if(total === 0 && (masterKeyword || masterCat || masterBrand)) return "";
+      return `<p style="padding:10px;border-bottom:1px solid #e5edf5"><b>${b.name}</b> — ${total} barang</p>`;
+    })
+    .join("") || `<p style="padding:10px;color:#64748b">Data merek tidak ditemukan.</p>`;
 
-  masterProductTable.innerHTML = masterItems.map(i => `
-    <tr>
-      <td>${i.sku}</td>
-      <td>${i.name}</td>
-      <td>${categoryName(i.category_id)}</td>
-      <td>${brandName(i.brand_id)}</td>
-      <td>${supplierName(i.supplier_id)}</td>
-      <td><b>${num(i.current_stock)}</b></td>
-      <td>${rackCode(i.rack_id)}</td>
-      <td>${badge(statusItem(i))}</td>
-    </tr>
-  `).join("") || `<tr><td colspan="8">Tidak ada barang yang sesuai dengan filter.</td></tr>`;inTable.innerHTML=db.moves.filter(m=>m.movement_type==="IN").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge green">+${m.quantity}</span></td><td>${m.invoice_number||"-"}</td></tr>`).join("");
+  masterProductTable.innerHTML = masterItems
+    .map(i => `
+      <tr>
+        <td>${i.sku}</td>
+        <td>${i.name}</td>
+        <td>${categoryName(i.category_id)}</td>
+        <td>${brandName(i.brand_id)}</td>
+        <td>${supplierName(i.supplier_id)}</td>
+        <td><b>${num(i.current_stock)}</b></td>
+        <td>${rackCode(i.rack_id)}</td>
+        <td>${badge(statusItem(i))}</td>
+      </tr>
+    `)
+    .join("") || `<tr><td colspan="8">Tidak ada barang yang sesuai dengan filter.</td></tr>`;
+
+  inTable.innerHTML=db.moves.filter(m=>m.movement_type==="IN").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge green">+${m.quantity}</span></td><td>${m.invoice_number||"-"}</td></tr>`).join("");
   outTable.innerHTML=db.moves.filter(m=>m.movement_type==="OUT").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge red">-${m.quantity}</span></td><td>${m.purpose||"-"}</td></tr>`).join("");
   lowStockTable.innerHTML=items.filter(i=>statusItem(i)!=="Normal").map(i=>`<tr><td>${i.sku}</td><td>${i.name}</td><td>${categoryName(i.category_id)}</td><td>${i.current_stock}</td><td>${i.minimum_stock}</td><td>${rackCode(i.rack_id)}</td><td>${badge(statusItem(i))}</td></tr>`).join("") || `<tr><td colspan="7">Tidak ada barang yang menipis.</td></tr>`;
 }
