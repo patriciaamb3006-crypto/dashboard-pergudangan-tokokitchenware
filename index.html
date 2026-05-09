@@ -305,13 +305,6 @@
 
         <div class="filters">
           <input id="masterSearch" placeholder="Cari barang, kategori, atau merek..." oninput="renderAll()">
-          <select id="masterCategoryFilter" onchange="renderAll()">
-            <option value="">Semua Kategori</option>
-          </select>
-          <select id="masterBrandFilter" onchange="renderAll()">
-            <option value="">Semua Merek</option>
-          </select>
-          <button class="btn" onclick="clearMasterFilter()">Bersihkan</button>
         </div>
 
         <div class="two-col">
@@ -320,7 +313,7 @@
         </div>
 
         <div class="card table-wrap" style="margin-top:14px">
-          <h3>Barang Sesuai Filter</h3>
+          <h3>Barang Sesuai Pencarian</h3>
           <table>
             <thead>
               <tr>
@@ -524,7 +517,7 @@ function openPage(id,btn){
   renderAll();
 }
 function clearFilter(){searchText.value="";fCategory.value="";fBrand.value="";fSupplier.value="";fStatus.value="";renderAll()}
-function clearMasterFilter(){masterSearch.value="";masterCategoryFilter.value="";masterBrandFilter.value="";renderAll()}
+function clearMasterFilter(){ if(document.getElementById("masterSearch")) masterSearch.value=""; renderAll(); }
 
 function fillSelect(el,data,label,keyName="name"){
   const before=el.value;
@@ -544,8 +537,8 @@ function setupSelects(){
   fillSelect(brand,db.brands,"Pilih merek","name");
   fillSelect(supplier,db.suppliers,"Pilih supplier","name");
   fillSelect(rack,db.racks,"Pilih rak","code");
-  masterCategoryFilter.innerHTML='<option value="">Semua Kategori</option>'+db.categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
-  masterBrandFilter.innerHTML='<option value="">Semua Merek</option>'+db.brands.map(b=>`<option value="${b.id}">${b.name}</option>`).join("");
+  /* masterCategoryFilter removed */='<option value="">Semua Kategori</option>'+db.categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
+  /* masterBrandFilter removed */='<option value="">Semua Merek</option>'+db.brands.map(b=>`<option value="${b.id}">${b.name}</option>`).join("");
   fillItem(inItem); fillItem(outItem);
   if(!inDate.value)inDate.value=today();
   if(!outDate.value)outDate.value=today();
@@ -597,35 +590,24 @@ function renderTables(){
     `).join("") || `<tr><td colspan="6">Supplier tidak ditemukan.</td></tr>`;
 
   const masterKeyword=(document.getElementById("masterSearch")?.value||"").toLowerCase();
-  const masterCat=(document.getElementById("masterCategoryFilter")?.value||"");
-  const masterBrand=(document.getElementById("masterBrandFilter")?.value||"");
 
   const masterItems = db.items.filter(i => {
     const nama = (i.name || "").toLowerCase();
     const kategori = categoryName(i.category_id).toLowerCase();
     const merek = brandName(i.brand_id).toLowerCase();
 
-    const cocokKeyword =
+    return (
       !masterKeyword ||
       nama.includes(masterKeyword) ||
       kategori.includes(masterKeyword) ||
-      merek.includes(masterKeyword);
-
-    const cocokKategori =
-      !masterCat ||
-      String(i.category_id) === String(masterCat);
-
-    const cocokMerek =
-      !masterBrand ||
-      String(i.brand_id) === String(masterBrand);
-
-    return cocokKeyword && cocokKategori && cocokMerek;
+      merek.includes(masterKeyword)
+    );
   });
 
   categoryList.innerHTML = db.categories
     .map(c => {
       const total = masterItems.filter(i => i.category_id === c.id).length;
-      if(total === 0 && (masterKeyword || masterCat || masterBrand)) return "";
+      if(total === 0 && masterKeyword) return "";
       return `<p style="padding:10px;border-bottom:1px solid #e5edf5"><b>${c.name}</b> — ${total} barang</p>`;
     })
     .join("") || `<p style="padding:10px;color:#64748b">Data kategori tidak ditemukan.</p>`;
@@ -633,7 +615,7 @@ function renderTables(){
   brandList.innerHTML = db.brands
     .map(b => {
       const total = masterItems.filter(i => i.brand_id === b.id).length;
-      if(total === 0 && (masterKeyword || masterCat || masterBrand)) return "";
+      if(total === 0 && masterKeyword) return "";
       return `<p style="padding:10px;border-bottom:1px solid #e5edf5"><b>${b.name}</b> — ${total} barang</p>`;
     })
     .join("") || `<p style="padding:10px;color:#64748b">Data merek tidak ditemukan.</p>`;
@@ -651,7 +633,7 @@ function renderTables(){
         <td>${badge(statusItem(i))}</td>
       </tr>
     `)
-    .join("") || `<tr><td colspan="8">Tidak ada barang yang sesuai dengan filter.</td></tr>`;
+    .join("") || `<tr><td colspan="8">Tidak ada barang yang sesuai dengan pencarian.</td></tr>`;
 
   inTable.innerHTML=db.moves.filter(m=>m.movement_type==="IN").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge green">+${m.quantity}</span></td><td>${m.invoice_number||"-"}</td></tr>`).join("");
   outTable.innerHTML=db.moves.filter(m=>m.movement_type==="OUT").slice().reverse().map(m=>`<tr><td>${m.movement_date}</td><td>${getItemName(m.product_id)}</td><td><span class="badge red">-${m.quantity}</span></td><td>${m.purpose||"-"}</td></tr>`).join("");
